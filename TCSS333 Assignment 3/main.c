@@ -8,10 +8,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
 #define NAME_SIZE 20;
 #define TOTAL_NAMES 100;
 
+int findName(char (*allNames)[30], char *theName, int numberOfNames);
+//void print2dArray(char *allNames, char *theName);
+int compareNames(char *first, char *second);
+//void compareNames(char name1[][20], char name2[], int num);
+int nameLength(char *);
 int findIndexOfComma(char *);
 char parseLine(char *, int);
 int getRank(char *line, size_t length);
@@ -19,45 +26,216 @@ int getRank(char *line, size_t length);
 int main(void) {
     
     FILE *txtFile1 = fopen("names/yob1920.txt", "r");
-//    FILE *txtFile1 = fopen("sample.txt", "r");
+    FILE *inputFile[] = {
+        inputFile[0] = fopen("names/yob1920.txt", "r"),
+        inputFile[1] = fopen("names/yob1930.txt", "r"),
+        inputFile[2] = fopen("names/yob1940.txt", "r"),
+        inputFile[3] = fopen("names/yob1950.txt", "r"),
+        inputFile[4] = fopen("names/yob1960.txt", "r"),
+        inputFile[5] = fopen("names/yob1970.txt", "r"),
+        inputFile[6] = fopen("names/yob1980.txt", "r"),
+        inputFile[7] = fopen("names/yob1990.txt", "r"),
+        inputFile[8] = fopen("names/yob2000.txt", "r"),
+        inputFile[9] = fopen("names/yob2010.txt", "r"),
+    };
     
     char *line = NULL;
     size_t length = 0;
-    size_t read;
+//    size_t read;
     
     int i, j;
     int currentFile = 0;
-    int numOfFiles;
+    int totalNames = 0;
+//    int numOfFiles = 10;
+//    int counter = 0;
     
-    char names[100][20]; // 2d array of names
-    int ranks[100][10]; // 2d array of ranks
+//    bool nameNotFound = false;
+    
+//    char names[150][20]; // 2d array of names
+    char names[400][30]; // 2d array of names
+    int ranks[400][10]; // 2d array of ranks
+    
+//    char (*pointer)[30] = names;
+    char *pCurrentName;
+    
+//    char patr[] = "Patricia";
+//    char *p1 = patr;
+    
+//    char (*pointer)[200][30];
+    
+    for (i = 0; i < 400; i++) {
+        for (j = 0; j < 10; j++) {
+            ranks[i][j] = 0;
+        }
+    }
+    
+    for (i = 0; i < 400; i++) {
+        for (j = 0; j < 30; j++) {
+            names[i][j] = '\0';
+//            printf("%c ", names[i][j]);
+        }
+//        printf("\n");
+    }
+    
+    bool firstFile = true;
+    
+//    for (i = 1; i <= 10; i++) {
+//        inputFile[i] = fopen("names/yob1920.txt", "r");
+//    }
     
     if (txtFile1 == NULL) {
         perror("Failed to open file");
     }
     
-    
-        
-    for (i = 0; i < 100; i++) {
-        read = getline(&line, &length, txtFile1);
-//        printf("Retrieved line of length %zu :\n", read);
-//        printf("%s", line);
-//        printf("%c\n", parseLine(line, findIndexOfComma(line)));
-        
-        for (j = 0; j < findIndexOfComma(line); j++) {
-            names[i][j] = line[j];
+    for (i = 0; i < 10; i++) {
+        if (inputFile[i] == NULL) {
+            perror("Failed to open file");
         }
-        
-        ranks[i][currentFile] = getRank(line, length);
-        
-//        printf("new num is - %d\n", getRank(line, length));
-        
     }
     
-    printf("%d\n", ranks[99][0]);
-//    printf("%c\n", names[99][0]);
+    while (currentFile < 10) {
+        
+        for (i = 0; i < 300; i++) {
+            getline(&line, &length, inputFile[currentFile]);
+            int indexComma = findIndexOfComma(line);
+            
+            // 100 names from first file
+            // Check if the current name row is empty
+            // If it is empty write the current name from the file
+            if (i < 100 && firstFile == true) {
+                if (names[i][0] == 0) {
+//                    int indexComma = findIndexOfComma(line);
+                    
+                    for (j = 0; j < findIndexOfComma(line); j++) {
+                        names[i][j] = line[j];
+                    }
+                    names[i][indexComma] = '\0';
+                }
+                totalNames++;
+            }
+            
+            
+            // 100 ranks from first file
+            if (i < 100 && firstFile == true) {
+                for (j = 0; j < 1; j++) {
+                    ranks[i][j] = getRank(line, length);
+                }
+
+            }
+            
+            
+            if (!firstFile && i < 100) {
+                
+                char currentName[indexComma + 1];
+                
+                // make currentName to compare with names array
+                for (int k = 0; k < indexComma; k++) {
+                    currentName[k] = line[k];
+                }
+                
+                currentName[indexComma] = '\0'; // set null character
+                pCurrentName = currentName;
+                
+                for (int row = 0; row < totalNames; row++) {
+                    if (strcmp(names[row], currentName) == 0) {
+//                        printf("%d - %s - %d - %d\n", row, currentName, currentFile, getRank(line, length));
+                        ranks[row][currentFile] = getRank(line, length);
+                    
+                    }
+                    
+                }
+                
+//                findName(names, pCurrentName);
+                
+                if (findName(names, pCurrentName, totalNames) == 1) {
+                    
+//                    printf("%s\n", currentName);
+//                    printf("%d\n", totalNames);
+//                    printf("%s\n", line);
+                    
+                    for (int f = 0; f < indexComma; f++) {
+                        names[totalNames][f] = currentName[f];
+                    }
+                    
+                    ranks[totalNames][currentFile] = getRank(line, length);
+                    
+                    totalNames++;
+
+//                    while (*pCurrentName) {
+                    
+//                        names[totalNames][index] = currentName[index];
+//                        index++;
+//                        *names[totalNames] = *pCurrentName;
+//                        pCurrentName++;
+//                        names[totalNames]++;
+//                    }
+                    
+                }
+                
+            }
+        }
+        
+        
+//        print2dArray(pointer);
+        
+        currentFile++;
+        firstFile = false;
+        printf("Total num of names is %d\n", totalNames);
+    }
+    
+//    print2dArray(pointer, p1);
+//    print2dArray(names, p1);
+//    printf("%d\n", compareNames(names[0], p1));
+    //print ranks
+//    for (int i = 0; i < 100; i++) {
+//        for (int j = 0; j < 3; j++) {
+//            printf("%d - %d  ", i, ranks[i][j]);
+//        }
+//        printf("\n");
+//    }
+    
+    
+    // print names
+//    for (i = 0; i <= 365; i++) {
+//        printf("%d - %s\n", i, names[i]);
+//    }
+    
+    // print all names and ranks
+    for (i = 0; i <= 365; i++) {
+        printf("%d - ", i);
+        for (j = 0; j < 15; j++) {
+            printf("%c", names[i][j]);
+        }
+        
+        for (j = 0; j < 10; j++) {
+            printf(" | %d | ", ranks[i][j]);
+        }
+        printf("\n");
+    }
+    
+//    printf("%s\n", names[365]);
+//    printf("%d\n", ranks[365][9]);
+    
+    
+    // print ranks
+    for (i = 0; i < 100; i++) {
+        
+        for (j = 0; j < 1; j++) {
+//            printf("%d\n", ranks[i][j]);
+        }
+        
+//        printf("\n");
+    }
+    
+//    printf("%d\n", ranks[0][0]);
+    
+    
     
     fclose(txtFile1);
+    
+    for (i = 0; i < 10; i++) {
+        fclose(inputFile[i]);
+    }
     
     if (line) {
         free(line);
@@ -66,6 +244,72 @@ int main(void) {
     return 0;
 }
 
+// finds the name that not in the names array
+int findName(char (*allNames)[30], char *theName, int numberOfNames) {
+//void print2dArray(char *allNames, char *theName) {
+
+    bool found = true;
+    int result = 0;
+    
+    for (int i = 0; i < numberOfNames; i++) {
+        if (compareNames(*(allNames + i), theName) == 0) {
+//            printf("%d\n", compareNames(*(allNames + i), theName));
+//            printf("orig - %s\n", allNames[i]);
+//            printf("new  - %s\n", theName);
+//            printf("%d\n", compareNames(*(allNames + i), theName));
+            found = false;
+            result = 0;
+        }
+    
+    }
+    
+//    printf("orig - %s\n", allNames);
+//    printf("new  - %s\n", theName);
+//    printf("%d\n", compareNames(allNames, theName));
+
+//    if (compareNames(allNames, theName) != 0) {
+//        notFound = true;
+//    }
+    
+    if (found) {
+//        printf("%s\n", theName);
+        found = false;
+        result = 1;
+    }
+    
+    return result;
+}
+
+
+
+int compareNames(char *first, char *second) {
+    
+    int result;
+    
+    while (*first == *second && *first != '\0' && * second != '\0') {
+        first++;
+        second++;
+    }
+    
+    if ((*first - *second) == 0) {
+        result = 0;
+//        printf("names are equal\n");
+    } else {
+        result = 1;
+    }
+    
+    return result;
+}
+
+int nameLength(char *name) {
+    int length = 0;
+    
+    while (name[length] != '\0') {
+        length++;
+    }
+    
+    return length;
+}
 
 int findIndexOfComma(char *line) {
     int commaIndex = 0;
