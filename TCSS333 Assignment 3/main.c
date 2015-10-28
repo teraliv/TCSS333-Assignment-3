@@ -14,6 +14,10 @@
 #define NAME_SIZE 20;
 #define TOTAL_NAMES 100;
 
+#define NAME_LENGTH 30
+
+
+int findNamePosition(char (*allNames)[30], char *theName, int numberOfNames);
 int findName(char (*allNames)[30], char *theName, int numberOfNames);
 //void print2dArray(char *allNames, char *theName);
 int compareNames(char *first, char *second);
@@ -22,6 +26,10 @@ int nameLength(char *);
 int findIndexOfComma(char *);
 char parseLine(char *, int);
 int getRank(char *line, size_t length);
+void quickStrSort(char *c, char *left, char *right,
+                  int length, char *limit, int (*rank)[3], char (*allNames)[30]);
+
+
 
 int main(void) {
     
@@ -52,30 +60,34 @@ int main(void) {
 //    bool nameNotFound = false;
     
 //    char names[150][20]; // 2d array of names
-    char names[400][30]; // 2d array of names
-    int ranks[400][10]; // 2d array of ranks
+    char names[400][NAME_LENGTH] = {'\0'}; // 2d array of names
+    int ranks[400][10] = {'\0'}; // 2d array of ranks
     
 //    char (*pointer)[30] = names;
     char *pCurrentName;
+    
+    
+    int nameCount = 0;
+    char *nam;
+    
+    char x[] = "Mary";
     
 //    char patr[] = "Patricia";
 //    char *p1 = patr;
     
 //    char (*pointer)[200][30];
     
-    for (i = 0; i < 400; i++) {
-        for (j = 0; j < 10; j++) {
-            ranks[i][j] = 0;
-        }
-    }
-    
-    for (i = 0; i < 400; i++) {
-        for (j = 0; j < 30; j++) {
-            names[i][j] = '\0';
-//            printf("%c ", names[i][j]);
-        }
-//        printf("\n");
-    }
+//    for (i = 0; i < 400; i++) {
+//        for (j = 0; j < 10; j++) {
+//            ranks[i][j] = 0;
+//        }
+//    }
+//    
+//    for (i = 0; i < 400; i++) {
+//        for (j = 0; j < 30; j++) {
+//            names[i][j] = '\0';
+//        }
+//    }
     
     bool firstFile = true;
     
@@ -180,8 +192,34 @@ int main(void) {
         
         currentFile++;
         firstFile = false;
-        printf("Total num of names is %d\n", totalNames);
+        
     }
+    
+    printf("Total num of names is %d\n", totalNames);
+//    printf("Desired name index: %d\n", findNamePosition(names, x, totalNames));
+    
+    
+    // quick sort results
+    nameCount = totalNames;
+    
+//    for (i = 0, nam = (char *)names; i <= nameCount; i++, nam += NAME_LENGTH) {
+//        printf("%3d %-13s%lu\n", i, nam, strlen(nam));
+//    }
+    
+    quickStrSort((char *)names, (char *)names, (char *)names + NAME_LENGTH * (nameCount - 1),
+                 NAME_LENGTH, (char *)names + NAME_LENGTH * nameCount, (int *)ranks, names);
+    
+    // traverse and print the sorted names
+    for (i = 0, nam = (char *)names; i < 366; i++, nam += NAME_LENGTH) {
+        printf("%2d %-13s", i, nam);
+        
+        for (j = 0; j < 10; j++) {
+            printf("%8d", ranks[i][j]);
+        }
+        printf("\n");
+    }
+    
+    
     
 //    print2dArray(pointer, p1);
 //    print2dArray(names, p1);
@@ -201,31 +239,31 @@ int main(void) {
 //    }
     
     // print all names and ranks
-    for (i = 0; i <= 365; i++) {
-        printf("%d - ", i);
-        for (j = 0; j < 15; j++) {
-            printf("%c", names[i][j]);
-        }
-        
-        for (j = 0; j < 10; j++) {
-            printf(" | %d | ", ranks[i][j]);
-        }
-        printf("\n");
-    }
+//    for (i = 0; i <= 365; i++) {
+//        printf("%d - ", i);
+//        for (j = 0; j < 15; j++) {
+//            printf("%c", names[i][j]);
+//        }
+//        
+//        for (j = 0; j < 10; j++) {
+//            printf(" | %d | ", ranks[i][j]);
+//        }
+//        printf("\n");
+//    }
     
 //    printf("%s\n", names[365]);
 //    printf("%d\n", ranks[365][9]);
     
     
     // print ranks
-    for (i = 0; i < 100; i++) {
-        
-        for (j = 0; j < 1; j++) {
-//            printf("%d\n", ranks[i][j]);
-        }
-        
+//    for (i = 0; i < 365; i++) {
+//        
+//        for (j = 0; j < 10; j++) {
+//            printf(" %d ", ranks[i][j]);
+//        }
+//        
 //        printf("\n");
-    }
+//    }
     
 //    printf("%d\n", ranks[0][0]);
     
@@ -359,4 +397,79 @@ int getRank(char *line, size_t length) {
 //    printf("new num is %d\n", newNum);
     
     return newNum;
+}
+
+
+// finds the row position of a name
+int findNamePosition(char (*allNames)[30], char *theName, int numberOfNames) {
+    
+    int result = 0;
+    
+    for (int i = 0; i < numberOfNames; i++) {
+        if (strcmp(*(allNames + i), theName) == 0) {
+            result = i;
+        }
+    }
+    
+    return result;
+}
+
+
+// QUICK SORT
+void quickStrSort(char *c, char *left, char *right,
+                  int length, char *limit, int (*rank)[3], char (*allNames)[30]){
+//    int k;
+    int n1, n2;
+    int row1[10];
+    int row2[10];
+    
+    int (*p)[3] = rank;
+    
+    char *i = left;
+    char *j = right;
+    char *swap[NAME_LENGTH] = {'\0'};
+    char test[length];
+    char *s1 = i, *s2 = j;
+    while (s1 < s2) {   // find midpoint for the test value
+        s1 = s1 + length;
+        s2 = s2 - length;
+    }
+    strncpy(test, s2, length - 1);
+//    printf("%s\n", s2);
+    do {
+        while (strcmp(i, test) < 0 && i < limit) i = i + length;
+        while (strcmp(j, test) > 0 && j >= c) j = j - length;
+        
+        // Swap the two values:
+        if (i <= j){
+            for (s1 = (char *)swap, s2 = i; *s2 != '\0'; s1++, s2++)
+                *s1 = *s2;
+            *s1 = *s2;  // Also copy the '\0'
+            for (s1 = i, s2 = j; *s2 != '\0'; s1++, s2++)
+                *s1 = *s2;
+            *s1 = *s2;
+            for (s1 = j, s2 = (char *)swap; *s2 != '\0'; s1++, s2++)
+                *s1 = *s2;
+            *s1 = *s2;
+            
+            n1 = findNamePosition(allNames, i, 366);
+            n2 = findNamePosition(allNames, j, 366);
+//            printf("index: %d - %s\n", n1, i);
+            
+            memcpy(row1, (*(p) + n1 * 10), sizeof(int) * 10);
+            memcpy(row2, (*(p) + n2 * 10), sizeof(int) * 10);
+            memcpy((*(p) + n1 * 10), row2, sizeof(int) * 10);
+            memcpy((*(p) + n2 * 10), row1, sizeof(int) * 10);
+
+            
+            i = i + length;
+            j = j - length;
+        }
+    } while (i <= j);
+    if (left < j) {
+        quickStrSort(c, left, j, length, limit, rank, allNames);
+    }
+    if (i < right) {
+        quickStrSort(c, i, right, length, limit, rank, allNames);
+    }
 }
