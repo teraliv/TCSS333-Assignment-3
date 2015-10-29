@@ -25,7 +25,7 @@ int compareNames(char *first, char *second);
 int findIndexOfComma(char *);
 int getRank(char *line, size_t length);
 void quickStrSort(char *c, char *left, char *right,
-                  int length, char *limit, int (*rank)[10], char (*allNames)[NAME_LENGTH]);
+                  int length, char *limit, int numberOfNames, int (*rank)[10], char (*allNames)[NAME_LENGTH]);
 
 
 
@@ -40,9 +40,9 @@ int main(void) {
 
     openFileAndReadContent(names, ranks, pTotalNames);
     quickStrSort((char *)names, (char *)names, (char *)names + NAME_LENGTH * (totalNames - 1),
-                 NAME_LENGTH, (char *)names + NAME_LENGTH * totalNames, ranks, names);
+                 NAME_LENGTH, (char *)names + NAME_LENGTH * totalNames, totalNames, ranks, names);
     
-    printResults(names, ranks, totalNames);
+    //printResults(names, ranks, totalNames);
     writeOutputFile(names, ranks, totalNames);
     
     return 0;
@@ -184,10 +184,15 @@ void writeOutputFile(char (*allNames)[NAME_LENGTH], int (*ranks)[10], int number
     
     FILE *outputFile = fopen("summary.csv", "w");
     
-    int i, j;
+    int i, j, year = 1910;
     char *name;
     
     
+    fprintf(outputFile, "%s,", "Name");
+    for (i = 0; i < 10; i++) {
+        fprintf(outputFile, "%d,", year+=10);
+    }
+    fprintf(outputFile, "\n");
     
     for (i = 0, name = (char *)allNames; i < numberOfNames; i++, name += NAME_LENGTH) {
         fprintf(outputFile, "%s,", name);
@@ -215,15 +220,13 @@ void writeOutputFile(char (*allNames)[NAME_LENGTH], int (*ranks)[10], int number
  * @param numberOfNames - pointer to keep track of total number of names
  */
 void printResults(char (*allNames)[NAME_LENGTH], int (*ranks)[10], int numberOfNames) {
-    
+
     char *name;
-    
     int i, j;
     
     // traverse and print the names and ranks
     for (i = 0, name = (char *)allNames; i < numberOfNames; i++, name += NAME_LENGTH) {
         printf("%2d %-13s", i, name);
-        
         for (j = 0; j < 10; j++) {
             printf("%8d", ranks[i][j]);
         }
@@ -307,31 +310,6 @@ int findIndexOfComma(char *line) {
 
 
 /*
- * This function finds and gets the rank
- * of the name from the given line.
- *
- * @param *line - pointer to the line of characters
- * @param length - length of the line
- * @return - returns rank of the name
- */
-int getRank(char *line, size_t length) {
-    
-    int comma = findIndexOfComma(line) + 3;
-    int i;
-    int size = (int)length - comma - 2;
-    char num[size];
-    
-    for (i = 0; i < size; i++) {
-        num[i] = line[i + comma];
-    }
-    
-    int rank = atoi(num);
-    
-    return rank;
-}
-
-
-/*
  * This function finds the row index of the
  * given name in the 2d names array.
  *
@@ -366,8 +344,8 @@ int findNamePosition(char (*allNames)[NAME_LENGTH], char *theName, int numberOfN
  * @param *allNames - pointer to the 2d array of names
  * @param *rank - pointer to the ranks array
  */
-void quickStrSort(char *c, char *left, char *right,
-                  int length, char *limit, int (*rank)[10], char (*allNames)[NAME_LENGTH]){
+void quickStrSort(char *c, char *left, char *right, int length, char *limit,
+                  int numberOfNames, int (*rank)[10], char (*allNames)[NAME_LENGTH]){
 
     int n1, n2;
     int row1[10];
@@ -402,9 +380,10 @@ void quickStrSort(char *c, char *left, char *right,
                 *s1 = *s2;
             *s1 = *s2;
             
-            n1 = findNamePosition(allNames, i, 366);
-            n2 = findNamePosition(allNames, j, 366);
+            n1 = findNamePosition(allNames, i, numberOfNames);
+            n2 = findNamePosition(allNames, j, numberOfNames);
             
+            // swap ranks
             memcpy(row1, (*(p) + n1 * 10), sizeof(int) * 10);
             memcpy(row2, (*(p) + n2 * 10), sizeof(int) * 10);
             memcpy((*(p) + n1 * 10), row2, sizeof(int) * 10);
@@ -416,9 +395,9 @@ void quickStrSort(char *c, char *left, char *right,
         }
     } while (i <= j);
     if (left < j) {
-        quickStrSort(c, left, j, length, limit, rank, allNames);
+        quickStrSort(c, left, j, length, limit, numberOfNames, rank, allNames);
     }
     if (i < right) {
-        quickStrSort(c, i, right, length, limit, rank, allNames);
+        quickStrSort(c, i, right, length, limit, numberOfNames, rank, allNames);
     }
 }
