@@ -1,244 +1,203 @@
-//
-//  main.c
-//  TCSS333 Assignment 3
-//
-//  Created by aterikov on 10/22/15.
-//  Copyright © 2015 Alex Terikov. All rights reserved.
-//
+/*
+ *  TCSS 333 - Autumn 2015
+ *
+ *  Assignment 3 - Most Popular Names
+ *  Alex Terikov (teraliv@uw.edu)
+ *  10/22/2015
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 
-#define NAME_SIZE 20;
-#define TOTAL_NAMES 100;
-
 #define NAME_LENGTH 30
+#define MAXIMUM_NAMES 400
 
 
-void writeOutputFile(char (*allNames)[30], int (*ranks)[10], int numberOfNames);
-int findNamePosition(char (*allNames)[30], char *theName, int numberOfNames);
-int findName(char (*allNames)[30], char *theName, int numberOfNames);
-//void print2dArray(char *allNames, char *theName);
+void openFileAndReadContent(char (*names)[NAME_LENGTH], int (*ranks)[10], int *totalNames);
+void writeNamesAndRanks(char *line, int *length, int rank, int comma, int *totalNames, int fileNum, char (*names)[NAME_LENGTH], int (*ranks)[10]);
+void writeOutputFile(char (*allNames)[NAME_LENGTH], int (*ranks)[10], int numberOfNames);
+void printResults(char (*allNames)[NAME_LENGTH], int (*ranks)[10], int numberOfNames);
+int findNamePosition(char (*allNames)[NAME_LENGTH], char *theName, int numberOfNames);
+int findName(char (*allNames)[NAME_LENGTH], char *theName, int numberOfNames);
 int compareNames(char *first, char *second);
-//void compareNames(char name1[][20], char name2[], int num);
-int nameLength(char *);
 int findIndexOfComma(char *);
-char parseLine(char *, int);
 int getRank(char *line, size_t length);
 void quickStrSort(char *c, char *left, char *right,
-                  int length, char *limit, int (*rank)[3], char (*allNames)[30]);
+                  int length, char *limit, int (*rank)[10], char (*allNames)[NAME_LENGTH]);
 
 
 
 int main(void) {
     
-    FILE *txtFile1 = fopen("names/yob1920.txt", "r");
-    FILE *outputFile = fopen("result.csv", "w");
+    char names[MAXIMUM_NAMES][NAME_LENGTH] = {'\0'}; // 2d array of names
+    int ranks[MAXIMUM_NAMES][10] = {'\0'}; // 2d array of ranks
     
-    FILE *inputFile[] = {
-        inputFile[0] = fopen("names/yob1920.txt", "r"),
-        inputFile[1] = fopen("names/yob1930.txt", "r"),
-        inputFile[2] = fopen("names/yob1940.txt", "r"),
-        inputFile[3] = fopen("names/yob1950.txt", "r"),
-        inputFile[4] = fopen("names/yob1960.txt", "r"),
-        inputFile[5] = fopen("names/yob1970.txt", "r"),
-        inputFile[6] = fopen("names/yob1980.txt", "r"),
-        inputFile[7] = fopen("names/yob1990.txt", "r"),
-        inputFile[8] = fopen("names/yob2000.txt", "r"),
-        inputFile[9] = fopen("names/yob2010.txt", "r"),
-    };
-    
-    char *line = NULL;
-    size_t length = 0;
-    
-    int i, j;
-    int currentFile = 0;
     int totalNames = 0;
+    int *pTotalNames = &totalNames;
+    
 
-    char names[400][NAME_LENGTH] = {'\0'}; // 2d array of names
-    int ranks[400][10] = {'\0'}; // 2d array of ranks
+    openFileAndReadContent(names, ranks, pTotalNames);
+    quickStrSort((char *)names, (char *)names, (char *)names + NAME_LENGTH * (totalNames - 1),
+                 NAME_LENGTH, (char *)names + NAME_LENGTH * totalNames, ranks, names);
     
-    char *pCurrentName;
-    
-    
-    int nameCount = 0;
-    char *nam;
-    
-    bool firstFile = true;
-    
-//    for (i = 1; i <= 10; i++) {
-//        inputFile[i] = fopen("names/yob1920.txt", "r");
-//    }
-    
-    if (txtFile1 == NULL) {
-        perror("Failed to open file");
-    }
-    
-    for (i = 0; i < 10; i++) {
-        if (inputFile[i] == NULL) {
-            perror("Failed to open file");
-        }
-    }
-    
-    while (currentFile < 10) {
-        
-        for (i = 0; i < 300; i++) {
-            getline(&line, &length, inputFile[currentFile]);
-            int indexComma = findIndexOfComma(line);
-            
-            // 100 names from first file
-            // Check if the current name row is empty
-            // If it is empty write the current name from the file
-            if (i < 100 && firstFile == true) {
-                if (names[i][0] == 0) {
-//                    int indexComma = findIndexOfComma(line);
-                    
-                    for (j = 0; j < findIndexOfComma(line); j++) {
-                        names[i][j] = line[j];
-                    }
-                    names[i][indexComma] = '\0';
-                }
-                totalNames++;
-            }
-            
-            
-            // 100 ranks from first file
-            if (i < 100 && firstFile == true) {
-                for (j = 0; j < 1; j++) {
-                    ranks[i][j] = getRank(line, length);
-                }
-
-            }
-            
-            
-            if (!firstFile && i < 100) {
-                
-                char currentName[indexComma + 1];
-                
-                // make currentName to compare with names array
-                for (int k = 0; k < indexComma; k++) {
-                    currentName[k] = line[k];
-                }
-                
-                currentName[indexComma] = '\0'; // set null character
-                pCurrentName = currentName;
-                
-                for (int row = 0; row < totalNames; row++) {
-                    if (strcmp(names[row], currentName) == 0) {
-//                        printf("%d - %s - %d - %d\n", row, currentName, currentFile, getRank(line, length));
-                        ranks[row][currentFile] = getRank(line, length);
-                    
-                    }
-                    
-                }
-                
-//                findName(names, pCurrentName);
-                
-                if (findName(names, pCurrentName, totalNames) == 1) {
-                    
-//                    printf("%s\n", currentName);
-//                    printf("%d\n", totalNames);
-//                    printf("%s\n", line);
-                    
-                    for (int f = 0; f < indexComma; f++) {
-                        names[totalNames][f] = currentName[f];
-                    }
-                    
-                    ranks[totalNames][currentFile] = getRank(line, length);
-                    
-                    totalNames++;
-
-//                    while (*pCurrentName) {
-                    
-//                        names[totalNames][index] = currentName[index];
-//                        index++;
-//                        *names[totalNames] = *pCurrentName;
-//                        pCurrentName++;
-//                        names[totalNames]++;
-//                    }
-                    
-                }
-                
-            }
-        }
-
-        currentFile++;
-        firstFile = false;
-    }
-    
-    
-    
-    // quick sort results
-    nameCount = totalNames;
-    
-    
-    quickStrSort((char *)names, (char *)names, (char *)names + NAME_LENGTH * (nameCount - 1),
-                 NAME_LENGTH, (char *)names + NAME_LENGTH * nameCount, (int *)ranks, names);
-    
-    // traverse and print the sorted names
-    for (i = 0, nam = (char *)names; i < 366; i++, nam += NAME_LENGTH) {
-        printf("%2d %-13s", i, nam);
-        
-        for (j = 0; j < 10; j++) {
-            printf("%8d", ranks[i][j]);
-        }
-        printf("\n");
-    }
-    
-    
-    // write to a file
-    for (i = 0, nam = (char *)names; i < 366; i++, nam += NAME_LENGTH) {
-        fprintf(outputFile, "%s,", nam);
-        for (j = 0; j < 10; j++) {
-            if (ranks[i][j] == 0) {
-                fprintf(outputFile, ",");
-            } else {
-                fprintf(outputFile, "%d,", ranks[i][j]);
-            }
-        }
-        fprintf(outputFile, "\n");
-    }
-    
-    writeOutputFile(names, (int *)ranks, 366);
-    
-    
-    fclose(txtFile1);
-    
-    for (i = 0; i < 10; i++) {
-        fclose(inputFile[i]);
-    }
-    fclose(outputFile);
-    
-    if (line) {
-        free(line);
-    }
+    printResults(names, ranks, totalNames);
+    writeOutputFile(names, ranks, totalNames);
     
     return 0;
 }
 
 
 
+/*
+ * This function open 10 txt files
+ * and read the content of every file line by line.
+ *
+ * @param *names - pointer to 2d array of names
+ * @param *ranks - pointer to 2d array of name ranks
+ * @param *totalNames - pointer to keep track of total number of names
+ */
+void openFileAndReadContent(char (*names)[NAME_LENGTH], int (*ranks)[10], int *totalNames) {
+    
+    // open all 10 files with names
+    FILE *inputFile[] = {
+        inputFile[0] = fopen("yob1920.txt", "r"),
+        inputFile[1] = fopen("yob1930.txt", "r"),
+        inputFile[2] = fopen("yob1940.txt", "r"),
+        inputFile[3] = fopen("yob1950.txt", "r"),
+        inputFile[4] = fopen("yob1960.txt", "r"),
+        inputFile[5] = fopen("yob1970.txt", "r"),
+        inputFile[6] = fopen("yob1980.txt", "r"),
+        inputFile[7] = fopen("yob1990.txt", "r"),
+        inputFile[8] = fopen("yob2000.txt", "r"),
+        inputFile[9] = fopen("yob2010.txt", "r"),
+    };
+    
+    int i, currentFile = 0;
+    
+    char *line = NULL; // line to read from file
+    size_t length = 0; // length of the line
+    
+
+    // read all files
+    while (currentFile < 10) {
+        
+        //read only firs 100 lines
+        for (i = 0; i < 100; i++) {
+            
+            // read current line
+            getline(&line, &length, inputFile[currentFile]);
+            // get the index of first comma
+            int indexOfComma = findIndexOfComma(line);
+
+            writeNamesAndRanks((char *)line, (int *)length, i, indexOfComma, totalNames, currentFile, names, ranks);
+        }
+        currentFile++;
+    }
+    
+    if (line) {
+        free(line); // empty memory
+    }
+    
+    // close all files
+    for (i = 0; i < 10; i++) {
+        fclose(inputFile[i]);
+    }
+}
 
 
+/*
+ * This function gets the line with the name and rank
+ * and writes it to the 2d arrays of names and ranks
+ *
+ * @param *line - pointer to the current line from a file
+ * @param *length - pointer to the length of the line
+ * @param *totalNames - pointer to keep track of total number of names
+ * @param fileNum - current file number
+ * @param *names - pointer to 2d array of names
+ * @param *ranks - pointer to 2d array of name ranks
+ */
+void writeNamesAndRanks(char *line, int *length, int rank, int comma, int *totalNames, int fileNum, char (*names)[NAME_LENGTH], int (*ranks)[10]) {
+    
+    int i, row;
+    char currentName[comma + 1];
+    
+    // write first hundred names withoud checking
+    // if the are exist int the names array
+    if (*totalNames < 100) {
+        for (i = 0; i < comma; i++) {
+            names[*totalNames][i] = line[i];
+        }
+        
+        // write rank
+//        ranks[*totalNames][fileNum] = getRank(line, (int)length);
+        ranks[*totalNames][fileNum] = rank + 1;
+        (*totalNames)++;
+    }
+    
+    // make current name to compare with all names int the array
+    for (i = 0; i < comma; i++) {
+        currentName[i] = line[i];
+    }
+    currentName[comma] = '\0'; // set null character
+    
+    // do not go here untill write firs hundred
+    // names are writen from 1st file
+    if (*totalNames >= 100) {
+        
+        // check if the name is in the array and
+        // update its rank for the given year
+        for (row = 0; row < *totalNames; row++) {
+            if (strcmp(names[row], currentName) == 0) {
+//                ranks[row][fileNum] = getRank(line, (int)length);
+                ranks[row][fileNum] = rank + 1;
+            }
+        }
+    }
+    
+    // check if a name is in the list of hundred for the
+    // current year and do not exist in the names array
+    // then add it to the array and write it rank
+    if (findName(names, currentName, *totalNames) == 1) {
 
-void writeOutputFile(char (*allNames)[30], int (*ranks)[10], int numberOfNames) {
+        for (i = 0; i < comma; i++) {
+            names[*totalNames][i] = currentName[i];
+        }
+        
+//        ranks[*totalNames][fileNum] = getRank(line, (int)length);
+        ranks[*totalNames][fileNum] = rank + 1;
+        (*totalNames)++;
+    }
+}
+
+
+/*
+ * This function open writes all names and ranks
+ * to the CSV file
+ *
+ * @param *names - pointer to 2d array of names
+ * @param *ranks - pointer to 2d array of name ranks
+ * @param numberOfNames - pointer to keep track of total number of names
+ */
+void writeOutputFile(char (*allNames)[NAME_LENGTH], int (*ranks)[10], int numberOfNames) {
     
     FILE *outputFile = fopen("summary.csv", "w");
     
-    char *name;
-//    int *rank;
     int i, j;
+    char *name;
+    
+    
     
     for (i = 0, name = (char *)allNames; i < numberOfNames; i++, name += NAME_LENGTH) {
         fprintf(outputFile, "%s,", name);
         
         for (j = 0; j < 10; j++) {
-            if (ranks[i][j] == 0) {
-                fprintf(outputFile, ",");
-            } else {
+            if (ranks[i][j] != '\0') {
                 fprintf(outputFile, "%d,", ranks[i][j]);
+            } else {
+                fprintf(outputFile, ",");
+
             }
         }
         fprintf(outputFile, "\n");
@@ -247,11 +206,43 @@ void writeOutputFile(char (*allNames)[30], int (*ranks)[10], int numberOfNames) 
     fclose(outputFile);
 }
 
-// finds the name that not in the names array
-int findName(char (*allNames)[30], char *theName, int numberOfNames) {
+
+/*
+ * This function open outputs results.
+ *
+ * @param *names - pointer to 2d array of names
+ * @param *ranks - pointer to 2d array of name ranks
+ * @param numberOfNames - pointer to keep track of total number of names
+ */
+void printResults(char (*allNames)[NAME_LENGTH], int (*ranks)[10], int numberOfNames) {
+    
+    char *name;
+    
+    int i, j;
+    
+    // traverse and print the names and ranks
+    for (i = 0, name = (char *)allNames; i < numberOfNames; i++, name += NAME_LENGTH) {
+        printf("%2d %-13s", i, name);
+        
+        for (j = 0; j < 10; j++) {
+            printf("%8d", ranks[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+/*
+ * This function check if the given name is
+ * in array of names.
+ *
+ * @param *names - pointer to 2d array of names
+ * @param *ranks - pointer to 2d array of name ranks
+ * @param numberOfNames - pointer to keep track of total number of names
+ * @return - returns 0 if the name was found, otherwise returns 1
+ */
+int findName(char (*allNames)[NAME_LENGTH], char *theName, int numberOfNames) {
 
     bool found = true;
-    
     int result = 0, i;
     
     for (i = 0; i < numberOfNames; i++) {
@@ -262,7 +253,6 @@ int findName(char (*allNames)[30], char *theName, int numberOfNames) {
     }
     
     if (found) {
-//        printf("%s\n", theName);
         found = false;
         result = 1;
     }
@@ -271,7 +261,14 @@ int findName(char (*allNames)[30], char *theName, int numberOfNames) {
 }
 
 
-
+/*
+ * This function check if the two given names
+ * are identical.
+ *
+ * @param *first - pointer to the first name
+ * @param *second - pointer to the second name
+ * @return - returns 0 if names are identical, otherwise returns 1
+ */
 int compareNames(char *first, char *second) {
     
     int result;
@@ -283,7 +280,6 @@ int compareNames(char *first, char *second) {
     
     if ((*first - *second) == 0) {
         result = 0;
-//        printf("names are equal\n");
     } else {
         result = 1;
     }
@@ -291,41 +287,33 @@ int compareNames(char *first, char *second) {
     return result;
 }
 
-int nameLength(char *name) {
-    int length = 0;
-    
-    while (name[length] != '\0') {
-        length++;
-    }
-    
-    return length;
-}
 
+/*
+ * This function finds the index position
+ * of the first comma in the give line of characters.
+ *
+ * @param *line - pointer to the line of characters
+ * @return - returns index of the comma
+ */
 int findIndexOfComma(char *line) {
-    int commaIndex = 0;
+    int index = 0;
     
-    while (line[commaIndex] != ',') {
-        commaIndex++;
+    while (line[index] != ',') {
+        index++;
     }
     
-    return commaIndex;
+    return index;
 }
 
 
-
-char parseLine(char *line, int indexOfComma) {
-    
-    int i;
-    char name[indexOfComma];
-    
-    for (i = 0; i < indexOfComma; i++) {
-        name[i] = line[i];
-    }
-    
-    return *name;
-}
-
-
+/*
+ * This function finds and gets the rank
+ * of the name from the given line.
+ *
+ * @param *line - pointer to the line of characters
+ * @param length - length of the line
+ * @return - returns rank of the name
+ */
 int getRank(char *line, size_t length) {
     
     int comma = findIndexOfComma(line) + 3;
@@ -333,27 +321,26 @@ int getRank(char *line, size_t length) {
     int size = (int)length - comma - 2;
     char num[size];
     
-//    printf("size - %d\n", comma);
-//    printf("start - %d\n", findIndexOfComma(line)+3);
-//    printf("value - %c\n", line[11]);
-//    printf("length - %zu\n", length);
-    
     for (i = 0; i < size; i++) {
         num[i] = line[i + comma];
-//        printf("num[i] - %c\n", num[i]);
     }
     
-    int newNum = atoi(num);
+    int rank = atoi(num);
     
-//    printf("%s\n", num);
-//    printf("new num is %d\n", newNum);
-    
-    return newNum;
+    return rank;
 }
 
 
-// finds the row position of a name
-int findNamePosition(char (*allNames)[30], char *theName, int numberOfNames) {
+/*
+ * This function finds the row index of the
+ * given name in the 2d names array.
+ *
+ * @param *allNames - pointer to the 2d array of names
+ * @param *theName - pointer to the name to be found
+ * @param numberOfNames - total number of the names
+ * @return - returns the row index of the name
+ */
+int findNamePosition(char (*allNames)[NAME_LENGTH], char *theName, int numberOfNames) {
     
     int result = 0;
     
@@ -367,15 +354,26 @@ int findNamePosition(char (*allNames)[30], char *theName, int numberOfNames) {
 }
 
 
-// QUICK SORT
+/*
+ * This function sorts all names alphabeticaly and swaps
+ * the ranks of the names.
+ *
+ * @param *c - pointer to the 2d array of names
+ * @param *left - pointer to the 2d array of names
+ * @param *right - pointer to the 2d array of names
+ * @param length - the length of the name
+ * @param *limit - pointer to the end of the names array
+ * @param *allNames - pointer to the 2d array of names
+ * @param *rank - pointer to the ranks array
+ */
 void quickStrSort(char *c, char *left, char *right,
-                  int length, char *limit, int (*rank)[3], char (*allNames)[30]){
+                  int length, char *limit, int (*rank)[10], char (*allNames)[NAME_LENGTH]){
 
     int n1, n2;
     int row1[10];
     int row2[10];
     
-    int (*p)[3] = rank;
+    int (*p)[10] = rank;
     
     char *i = left;
     char *j = right;
